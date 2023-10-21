@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_10_21_095640) do
+ActiveRecord::Schema.define(version: 2023_10_21_104335) do
 
   create_table "addresses", charset: "utf8mb4", force: :cascade do |t|
     t.string "administrativeArea"
@@ -112,6 +112,17 @@ ActiveRecord::Schema.define(version: 2023_10_21_095640) do
     t.index ["store_id"], name: "index_statuses_on_store_id"
   end
 
+  create_table "stock_statuses", charset: "utf8mb4", force: :cascade do |t|
+    t.string "status"
+    t.datetime "checked_at"
+    t.bigint "dose_id", null: false
+    t.bigint "store_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["dose_id"], name: "index_stock_statuses_on_dose_id"
+    t.index ["store_id"], name: "index_stock_statuses_on_store_id"
+  end
+
   create_table "stores", charset: "utf8mb4", force: :cascade do |t|
     t.string "displayname"
     t.string "isMidnightPharmacy"
@@ -148,6 +159,8 @@ ActiveRecord::Schema.define(version: 2023_10_21_095640) do
   add_foreign_key "products", "medicines"
   add_foreign_key "products", "producers"
   add_foreign_key "statuses", "stores"
+  add_foreign_key "stock_statuses", "doses"
+  add_foreign_key "stock_statuses", "stores"
   add_foreign_key "stores", "areas"
   add_foreign_key "stores", "managers"
   add_foreign_key "van_routes", "stores"
