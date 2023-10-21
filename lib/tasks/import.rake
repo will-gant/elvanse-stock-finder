@@ -7,7 +7,9 @@ namespace :import do
     file_path = 'data.yaml'
     data = YAML.load_file(file_path)
 
-    data['regions'].each do |region_id, region_data|
+    data
+
+    data['locations']['regions'].each do |region_id, region_data|
       region = Region.find_or_create_by!(region_id: region_id, name: region_data['name'])
 
       region_data['areas'].each do |area_id, area_data|
