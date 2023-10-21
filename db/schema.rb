@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_10_21_082916) do
+ActiveRecord::Schema.define(version: 2023_10_21_095640) do
 
   create_table "addresses", charset: "utf8mb4", force: :cascade do |t|
     t.string "administrativeArea"
@@ -44,6 +44,17 @@ ActiveRecord::Schema.define(version: 2023_10_21_082916) do
     t.index ["store_id"], name: "index_contact_details_on_store_id"
   end
 
+  create_table "doses", charset: "utf8mb4", force: :cascade do |t|
+    t.bigint "concept_id"
+    t.string "category"
+    t.decimal "value", precision: 10
+    t.string "unit"
+    t.bigint "product_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["product_id"], name: "index_doses_on_product_id"
+  end
+
   create_table "grid_locations", charset: "utf8mb4", force: :cascade do |t|
     t.float "latitude"
     t.float "longitude"
@@ -60,6 +71,28 @@ ActiveRecord::Schema.define(version: 2023_10_21_082916) do
     t.string "name"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "medicines", charset: "utf8mb4", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "producers", charset: "utf8mb4", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "products", charset: "utf8mb4", force: :cascade do |t|
+    t.string "name"
+    t.bigint "medicine_id", null: false
+    t.bigint "producer_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["medicine_id"], name: "index_products_on_medicine_id"
+    t.index ["producer_id"], name: "index_products_on_producer_id"
   end
 
   create_table "regions", charset: "utf8mb4", force: :cascade do |t|
@@ -110,7 +143,10 @@ ActiveRecord::Schema.define(version: 2023_10_21_082916) do
   add_foreign_key "addresses", "stores"
   add_foreign_key "areas", "regions"
   add_foreign_key "contact_details", "stores"
+  add_foreign_key "doses", "products"
   add_foreign_key "grid_locations", "addresses"
+  add_foreign_key "products", "medicines"
+  add_foreign_key "products", "producers"
   add_foreign_key "statuses", "stores"
   add_foreign_key "stores", "areas"
   add_foreign_key "stores", "managers"
