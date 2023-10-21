@@ -1,4 +1,53 @@
 ---
+medicines:
+  Elvanse adult:
+    - type: capsules
+      dose_value: 30
+      dose_unit: mg
+      producer: Takeda UK Ltd
+      conceptId: 29762011000001109
+    - type: capsules
+      dose_value: 50
+      dose_unit: mg
+      producer: Takeda UK Ltd
+      conceptId: 29762411000001100
+    - type: capsules
+      dose_value: 70
+      dose_unit: mg
+      producer: Takeda UK Ltd
+      conceptId: 29762811000001103
+  Elvanse:
+    - type: capsules
+      dose_value: 20
+      dose_unit: mg
+      producer: Takeda UK Ltd
+      conceptId: 32271111000001106
+    - type: capsules
+      dose_value: 30
+      dose_unit: mg
+      producer: Takeda UK Ltd
+      conceptId: 22263211000001108
+    - type: capsules
+      dose_value: 40
+      dose_unit: mg
+      producer: Takeda UK Ltd
+      conceptId: 32272011000001102
+    - type: capsules
+      dose_value: 50
+      dose_unit: mg
+      producer: Takeda UK Ltd
+      conceptId: 21964011000001101
+    - type: capsules
+      dose_value: 60
+      dose_unit: mg
+      producer: Takeda UK Ltd
+      conceptId: 32272411000001106
+    - type: capsules
+      dose_value: 70
+      dose_unit: mg
+      producer: Takeda UK Ltd
+      conceptId: 21963711000001101
+
 locations:
   regions:
     98:

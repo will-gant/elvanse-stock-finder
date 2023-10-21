@@ -7,7 +7,26 @@ namespace :import do
     file_path = 'data.yaml'
     data = YAML.load_file(file_path)
 
-    data
+    data['medicines'].each do |medicine_name, doses|
+      doses.each do |dose|
+        medicine = Medicine.find_or_create_by!(name: medicine_name)
+
+        producer = Producer.find_or_create_by!(name: dose['producer'])
+
+        product = Product.find_or_create_by!(
+          medicine: medicine,
+          producer: producer
+        )
+
+        dose = product.doses.find_or_create_by!(
+          product: product,
+          value: dose['dose_value'],
+          unit: dose['dose_unit'],
+          concept_id: dose['conceptId'],
+          category: dose['type']
+        )
+      end
+    end
 
     data['locations']['regions'].each do |region_id, region_data|
       region = Region.find_or_create_by!(region_id: region_id, name: region_data['name'])
