@@ -36,3 +36,7 @@ end
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 
 gem "mysql2", "~> 0.5.5"
+
+gem "httparty", "~> 0.21.0"
+
+gem "factory_bot_rails", "~> 6.2"
