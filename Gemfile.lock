@@ -93,6 +93,7 @@ GEM
     faker (3.2.1)
       i18n (>= 1.8.11, < 2)
     ffi (1.16.3)
+    geocoder (1.8.2)
     globalid (1.2.1)
       activesupport (>= 6.1)
     hashdiff (1.0.1)
@@ -292,6 +293,7 @@ DEPENDENCIES
   capybara (>= 3.26)
   factory_bot_rails
   faker (~> 3.2)
+  geocoder (~> 1.8)
   httparty (~> 0.21.0)
   jbuilder (~> 2.7)
   listen (~> 3.3)

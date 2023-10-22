@@ -43,3 +43,5 @@ gem 'mysql2', '~> 0.5.5'
 
 gem 'httparty', '~> 0.21.0'
 gem 'rubocop-rails', '~> 2.21'
+
+gem 'geocoder', '~> 1.8'
