@@ -1,5 +1,5 @@
 FactoryBot.define do
   factory :medicine do
-    name { "lisdexamfetamine" }
+    name { 'lisdexamfetamine' }
   end
 end

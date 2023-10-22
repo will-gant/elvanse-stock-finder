@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :status do
     code { Faker::Number.number(digits: 3) }
-    text { "Open" }
+    text { 'Open' }
     association :store
   end
 end

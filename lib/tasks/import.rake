@@ -2,7 +2,7 @@ require 'yaml'
 
 namespace :import do
   desc 'Import data from YAML file to the database'
-  task :data => :environment do
+  task data: :environment do
     ActiveRecord::Base.logger = Logger.new(STDOUT)
     file_path = 'data.yaml'
     data = YAML.load_file(file_path)
@@ -14,19 +14,19 @@ namespace :import do
         product_ids = dose_data['product_ids']
         product_ids.each do |product_id|
           product = Product.find_or_create_by!(
-            medicine: medicine,
+            medicine:,
             dose: dose_value,
-            product_id: product_id
+            product_id:
           )
         end
       end
     end
 
     data['locations']['regions'].each do |region_id, region_data|
-      region = Region.find_or_create_by!(region_id: region_id, name: region_data['name'])
+      region = Region.find_or_create_by!(region_id:, name: region_data['name'])
 
       region_data['areas'].each do |area_id, area_data|
-        area = region.areas.find_or_create_by!(area_id: area_id, name: area_data['name'])
+        area = region.areas.find_or_create_by!(area_id:, name: area_data['name'])
 
         area_data['stores'].each do |store_id, store_data|
           if store_data['manager'].present?
@@ -46,12 +46,12 @@ namespace :import do
             nhsMarket: store_data['nhsMarket'],
             openDate: store_data['openDate'],
             primaryCareOrganisation: store_data['primaryCareOrganisation'],
-            store_id: store_id,
-            manager: manager
+            store_id:,
+            manager:
           )
 
           address_data = store_data.dig(:Address)&.presence
-          
+
           if address_data.present?
             if store.address.blank?
               address = store.create_address!(
@@ -99,11 +99,11 @@ namespace :import do
 
           van_routes_data = store_data.dig(:vanRoutes)&.presence
 
-          if van_routes_data.present? && store.van_routes.empty?
-            van_routes_data = store_data['vanRoutes']
-            van_routes_data&.each do |van_route_data|
-              store.van_routes.create!(code: van_route_data['code'].to_i)
-            end
+          next unless van_routes_data.present? && store.van_routes.empty?
+
+          van_routes_data = store_data['vanRoutes']
+          van_routes_data&.each do |van_route_data|
+            store.van_routes.create!(code: van_route_data['code'].to_i)
           end
         end
       end

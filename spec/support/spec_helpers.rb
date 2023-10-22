@@ -2,15 +2,15 @@ module SpecHelpers
   def mock_boots_api_response_body(store_ids:, product_ids:)
     stock_levels = store_ids.map.with_index do |store_id, index|
       {
-        "storeId" => store_id.to_s,
-        "productId" => product_ids.empty? ? "" : product_ids[index % product_ids.size].to_s,
-        "stockLevel" => "G"
+        'storeId' => store_id.to_s,
+        'productId' => product_ids.empty? ? '' : product_ids[index % product_ids.size].to_s,
+        'stockLevel' => 'G'
       }
     end
 
     {
-      "stockLevels" => stock_levels,
-      "rejectedFilters" => nil
+      'stockLevels' => stock_levels,
+      'rejectedFilters' => nil
     }.to_json
   end
 
@@ -23,6 +23,7 @@ module SpecHelpers
     while ids.size < n
       id = SecureRandom.random_number(10**17)
       next if id < 10**16
+
       ids << id
     end
     ids.to_a
