@@ -64,9 +64,19 @@ class StockFetcher
 
   def build_stock_statuses(stock_levels)
     stock_levels.map do |entry|
+      product = Product.find_by(product_id: entry['productId'].to_i)
+      if product.nil?
+        raise StockFetcherError, "Product ID #{entry['productId']} not found in database."
+      end
+
+      store = Store.find_by(store_id: entry['storeId'].to_i)
+      if store.nil?
+        raise StockFetcherError, "Store ID #{entry['storeId']} not found in database."
+      end
+
       StockStatus.new(
-        store_id: entry['storeId'].to_i,
-        product_id: entry['productId'].to_i,
+        store: store,
+        product: product,
         status: entry['stockLevel'],
         checked_at: Time.zone.now
       )

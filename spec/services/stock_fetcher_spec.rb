@@ -50,6 +50,10 @@ RSpec.describe StockFetcher, type: :service do
   end
 
   describe '#check_stock' do
+    let(:stores) { create_list(:store, number_of_stores) }
+    let(:products) { create_list(:product, number_of_products) }
+    let(:store_ids) { stores.map(&:store_id).map(&:to_s) }
+    let(:product_ids) { products.map(&:product_id).map(&:to_s) }
     let(:mocked_response) { mock_boots_api_response_body(store_ids:, product_ids:) }
     let(:response) { { status: 200, body: mocked_response, headers: {} } }
     let(:parsed_stock_levels) { JSON.parse(mocked_response)['stockLevels'] }
@@ -76,8 +80,8 @@ RSpec.describe StockFetcher, type: :service do
           expect(result).to all(be_an_instance_of(StockStatus))
 
           parsed_stock_levels.each_with_index do |entry, index|
-            expect(result[index].store_id).to eq(entry['storeId'].to_i)
-            expect(result[index].product_id).to eq(entry['productId'].to_i)
+            expect(result[index].store.store_id).to eq(entry['storeId'].to_i)
+            expect(result[index].product.product_id).to eq(entry['productId'].to_i)
             expect(result[index].status).to eq(entry['stockLevel'])
           end
         end
@@ -136,10 +140,10 @@ RSpec.describe StockFetcher, type: :service do
   end
 
   describe '#bulk_check_stock' do
-    let!(:stores) { create_list(:store, number_of_stores) }
-    let!(:products) { create_list(:product, number_of_products) }
-    let!(:store_ids) { stores.map(&:store_id).map(&:to_s) }
-    let!(:product_ids) { products.map(&:product_id).map(&:to_s) }
+    let(:stores) { create_list(:store, number_of_stores) }
+    let(:products) { create_list(:product, number_of_products) }
+    let(:store_ids) { stores.map(&:store_id).map(&:to_s) }
+    let(:product_ids) { products.map(&:product_id).map(&:to_s) }
 
     before do
       allow(stock_fetcher).to receive(:check_stock) do |store_ids:, product_ids:|
