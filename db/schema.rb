@@ -28,7 +28,7 @@ ActiveRecord::Schema.define(version: 2023_10_21_104335) do
 
   create_table "areas", charset: "utf8mb4", force: :cascade do |t|
     t.string "name"
-    t.integer "area_id"
+    t.bigint "area_id"
     t.bigint "region_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
@@ -79,19 +79,10 @@ ActiveRecord::Schema.define(version: 2023_10_21_104335) do
 
   create_table "regions", charset: "utf8mb4", force: :cascade do |t|
     t.string "name"
-    t.integer "region_id"
+    t.bigint "region_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["region_id"], name: "index_regions_on_region_id"
-  end
-
-  create_table "statuses", charset: "utf8mb4", force: :cascade do |t|
-    t.integer "code"
-    t.string "text"
-    t.bigint "store_id", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["store_id"], name: "index_statuses_on_store_id"
   end
 
   create_table "stock_statuses", charset: "utf8mb4", force: :cascade do |t|
@@ -105,17 +96,26 @@ ActiveRecord::Schema.define(version: 2023_10_21_104335) do
     t.index ["store_id"], name: "index_stock_statuses_on_store_id"
   end
 
+  create_table "store_statuses", charset: "utf8mb4", force: :cascade do |t|
+    t.integer "code"
+    t.string "text"
+    t.bigint "store_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["store_id"], name: "index_store_statuses_on_store_id"
+  end
+
   create_table "stores", charset: "utf8mb4", force: :cascade do |t|
     t.string "displayname"
-    t.string "isMidnightPharmacy"
-    t.string "isPharmacy"
+    t.boolean "isMidnightPharmacy"
+    t.boolean "isPharmacy"
     t.boolean "isPrescriptionStoreCollectionAvailable"
     t.string "name"
     t.integer "ndsasqm"
     t.string "nhsMarket"
     t.date "openDate"
     t.string "primaryCareOrganisation"
-    t.integer "store_id"
+    t.bigint "store_id"
     t.bigint "area_id", null: false
     t.bigint "manager_id"
     t.datetime "created_at", precision: 6, null: false
@@ -138,9 +138,9 @@ ActiveRecord::Schema.define(version: 2023_10_21_104335) do
   add_foreign_key "contact_details", "stores"
   add_foreign_key "grid_locations", "addresses"
   add_foreign_key "products", "medicines"
-  add_foreign_key "statuses", "stores"
   add_foreign_key "stock_statuses", "products"
   add_foreign_key "stock_statuses", "stores"
+  add_foreign_key "store_statuses", "stores"
   add_foreign_key "stores", "areas"
   add_foreign_key "stores", "managers"
   add_foreign_key "van_routes", "stores"
