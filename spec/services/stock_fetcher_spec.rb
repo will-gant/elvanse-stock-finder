@@ -276,4 +276,43 @@ RSpec.describe StockFetcher, type: :service do
       end
     end
   end
+
+  describe '#fetch_custom' do
+    let!(:product1) { create(:product, product_id: '1') }
+    let!(:product2) { create(:product, product_id: '2') }
+    let!(:region1) { create(:region, name: 'Region1') }
+    let!(:region2) { create(:region, name: 'Region2') }
+    let!(:area1) { create(:area, region: region1) }
+    let!(:area2) { create(:area, region: region2) }
+    let!(:store1) { create(:store, area: area1, store_id: '101') }
+    let!(:store2) { create(:store, area: area2, store_id: '102') }
+
+    before do
+      allow(subject).to receive(:fetch).and_return(true)
+    end
+
+    it 'fetches the right product IDs for provided products' do
+      subject.fetch_custom([product1, product2], 'Region1')
+      expect(subject).to have_received(:fetch).with(['1', '2'], ['101'])
+    end
+
+    it 'fetches data for multiple regions when provided' do
+      subject.fetch_custom([product1], 'Region1', 'Region2')
+      expect(subject).to have_received(:fetch).with(['1'], ['101']).once
+      expect(subject).to have_received(:fetch).with(['1'], ['102']).once
+    end
+
+    it 'does not fetch for regions not in the provided list' do
+      create(:region, name: 'Region3')
+      subject.fetch_custom([product1], 'Region1')
+      expect(subject).to have_received(:fetch).once
+    end
+
+    it 'does not fetch for products not in the provided list' do
+      product3 = create(:product, product_id: '3')
+      subject.fetch_custom([product1], 'Region1')
+      expect(subject).to have_received(:fetch).with(['1'], ['101'])
+      expect(subject).not_to have_received(:fetch).with(['3'], ['101'])
+    end
+  end
 end

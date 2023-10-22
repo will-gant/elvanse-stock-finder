@@ -26,11 +26,11 @@ class StockFetcher
     Product.where(medicine: medicine, dose: dose)
   end
 
-  def fetch_regions(*regions)
-    products_ids = Product.pluck(:product_id).map(&:to_s)
+  def fetch_custom(products, *regions)
+    product_ids = products.map(&:product_id).map(&:to_s)
     Region.where(name: regions).each do |region|
       store_ids = region.stores.pluck(:store_id).map(&:to_s)
-      fetch(products_ids, store_ids)
+      fetch(product_ids, store_ids)
     end
   end
 
