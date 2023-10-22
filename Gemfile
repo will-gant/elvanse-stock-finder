@@ -43,3 +43,4 @@ gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 gem "mysql2", "~> 0.5.5"
 
 gem "httparty", "~> 0.21.0"
+gem "rubocop-rails", "~> 2.21"
