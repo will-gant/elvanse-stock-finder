@@ -3,7 +3,7 @@ class CreateStockStatuses < ActiveRecord::Migration[6.1]
     create_table :stock_statuses do |t|
       t.string :status
       t.datetime :checked_at
-      t.references :dose, null: false, foreign_key: true
+      t.references :product, null: false, foreign_key: true
       t.references :store, null: false, foreign_key: true
 
       t.timestamps
