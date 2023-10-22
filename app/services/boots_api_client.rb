@@ -6,6 +6,7 @@ class BootsApiClient
   BASE_URL = 'https://www.boots.com/online/psc/itemStock'
   PERMITTED_STORE_IDS_PER_REQUEST = 10
   PERMITTED_PRODUCT_IDS_PER_REQUEST = 1
+  RATE_LIMIT_PER_MINUTE = 4
 
   class ApiError < StandardError; end
 
@@ -15,18 +16,13 @@ class BootsApiClient
     results = []
 
     store_ids.each_slice(PERMITTED_STORE_IDS_PER_REQUEST) do |store_chunk|
-      if store_chunk.size < PERMITTED_STORE_IDS_PER_REQUEST
-        to_add = PERMITTED_STORE_IDS_PER_REQUEST - store_chunk.size
-        store_chunk += store_ids.take(to_add)
-      end
+      filled_store_chunk = fill_chunk(store_chunk, store_ids, PERMITTED_STORE_IDS_PER_REQUEST)
 
       product_ids.each_slice(PERMITTED_PRODUCT_IDS_PER_REQUEST) do |product_chunk|
-        if product_chunk.size < PERMITTED_PRODUCT_IDS_PER_REQUEST
-          to_add = PERMITTED_PRODUCT_IDS_PER_REQUEST - product_chunk.size
-          product_chunk += product_ids.take(to_add)
-        end
+        filled_product_chunk = fill_chunk(product_chunk, product_ids, PERMITTED_PRODUCT_IDS_PER_REQUEST)
 
-        results << check_stock(store_chunk, product_chunk)
+        results << check_stock(filled_store_chunk, filled_product_chunk)
+        delay_next_request
       end
     end
 
@@ -66,6 +62,13 @@ class BootsApiClient
     end
   end
 
+  def fill_chunk(chunk, source_array, permitted_size)
+    return chunk if chunk.size >= permitted_size
+
+    to_add = permitted_size - chunk.size
+    chunk + source_array.take(to_add)
+  end
+
   def validate_request_args(store_ids, product_ids, bulk: false)
     validate_ids(store_ids, :store_ids, PERMITTED_STORE_IDS_PER_REQUEST, bulk)
     validate_ids(product_ids, :product_ids, PERMITTED_PRODUCT_IDS_PER_REQUEST, bulk)
@@ -82,5 +85,13 @@ class BootsApiClient
     condition = bulk ? 'at least' : 'exactly'
     type_string = permitted == 1 ? type.to_s.singularize : type.to_s
     raise ArgumentError, "Need #{condition} #{permitted} #{type_string}, received #{received}"
+  end
+
+  def time_between_requests
+    60.0 / RATE_LIMIT_PER_MINUTE
+  end
+
+  def delay_next_request
+    sleep(time_between_requests)
   end
 end

@@ -2,16 +2,16 @@ require 'rails_helper'
 require 'webmock/rspec'
 
 RSpec.describe BootsApiClient do
-  permitted_store_request_count = BootsApiClient::PERMITTED_STORE_IDS_PER_REQUEST
-  permitted_product_request_count = BootsApiClient::PERMITTED_PRODUCT_IDS_PER_REQUEST
+  permitted_stores_per_request = BootsApiClient::PERMITTED_STORE_IDS_PER_REQUEST
+  permitted_products_per_request = BootsApiClient::PERMITTED_PRODUCT_IDS_PER_REQUEST
 
   let(:client) { described_class.new }
-  let(:number_of_stores) { permitted_store_request_count }
-  let(:number_of_products) { permitted_product_request_count }
+  let(:number_of_stores) { permitted_stores_per_request }
+  let(:number_of_products) { permitted_products_per_request }
   let(:store_ids) { fake_store_ids(number_of_stores) }
   let(:product_ids) { fake_product_ids(number_of_products) }
-  let(:permitted_store_request_count) { BootsApiClient::PERMITTED_STORE_IDS_PER_REQUEST }
-  let(:permitted_product_request_count) { BootsApiClient::PERMITTED_PRODUCT_IDS_PER_REQUEST }
+  let(:permitted_stores_per_request) { BootsApiClient::PERMITTED_STORE_IDS_PER_REQUEST }
+  let(:permitted_products_per_request) { BootsApiClient::PERMITTED_PRODUCT_IDS_PER_REQUEST }
 
   describe '#check_stock' do
     let(:mocked_response) { mock_boots_api_response_body(store_ids:, product_ids:) }
@@ -31,8 +31,8 @@ RSpec.describe BootsApiClient do
       expect(client.check_stock(store_ids, product_ids)).to all(be_an_instance_of(StockStatus))
     end
 
-    context "with #{permitted_store_request_count} store IDs" do
-      context "with #{permitted_product_request_count} product ID" do
+    context "with #{permitted_stores_per_request} store IDs" do
+      context "with #{permitted_products_per_request} product ID" do
         it 'returns an array of StockStatus objects' do
           result = client.check_stock(store_ids, product_ids)
 
@@ -58,7 +58,7 @@ RSpec.describe BootsApiClient do
       end
 
       context 'with more than the permitted number of product ID' do
-        let(:number_of_products) { permitted_product_request_count + 1 }
+        let(:number_of_products) { permitted_products_per_request + 1 }
 
         it 'raises an ArgumentError' do
           expect do
@@ -80,8 +80,8 @@ RSpec.describe BootsApiClient do
       end
     end
 
-    context "with more than #{permitted_store_request_count} store IDs" do
-      let(:number_of_stores) { permitted_store_request_count + 1 }
+    context "with more than #{permitted_stores_per_request} store IDs" do
+      let(:number_of_stores) { permitted_stores_per_request + 1 }
 
       it 'raises an ArgumentError' do
         expect do
@@ -91,8 +91,8 @@ RSpec.describe BootsApiClient do
       end
     end
 
-    context "with fewer than #{permitted_store_request_count} store IDs" do
-      let(:number_of_stores) { permitted_store_request_count - 1 }
+    context "with fewer than #{permitted_stores_per_request} store IDs" do
+      let(:number_of_stores) { permitted_stores_per_request - 1 }
 
       it 'raises an ArgumentError' do
         expect do
@@ -112,38 +112,29 @@ RSpec.describe BootsApiClient do
           end
         end
       end
+
+      @delay_count = 0
+      allow(client).to receive(:delay_next_request) { @delay_count += 1 }
     end
 
     it 'returns an array of StockStatus instances' do
       expect(client.bulk_check_stock(store_ids, product_ids)).to all(be_an_instance_of(StockStatus))
     end
 
-    context "when the number of stores is divisible by #{permitted_store_request_count}" do
+    context "when the number of stores is divisible by #{permitted_stores_per_request}" do
       it 'returns as a stock status for each product at each store' do
         expect(client.bulk_check_stock(store_ids, product_ids).count).to eq(store_ids.count * product_ids.count)
       end
     end
 
-    context "when the number of products is divisible by #{permitted_product_request_count}" do
+    context "when the number of products is divisible by #{permitted_products_per_request}" do
       it 'returns as a stock status for each product at each store' do
         expect(client.bulk_check_stock(store_ids, product_ids).count).to eq(store_ids.count * product_ids.count)
       end
     end
 
-    context "when the number of stores is not divisible by #{permitted_store_request_count}" do
-      let(:number_of_stores) { permitted_store_request_count + 1 }
-
-      it 'returns as a stock status for each product at each store' do
-        expect(client.bulk_check_stock(store_ids, product_ids).count).to eq(store_ids.count * product_ids.count)
-      end
-
-      it 'returns only unique stock statuses' do
-        expect(client.bulk_check_stock(store_ids, product_ids).uniq.count).to eq(store_ids.count * product_ids.count)
-      end
-    end
-
-    context "when the number of products is not divisible by #{permitted_product_request_count}" do
-      let(:number_of_products) { permitted_product_request_count + 1 }
+    context "when the number of stores is not divisible by #{permitted_stores_per_request}" do
+      let(:number_of_stores) { permitted_stores_per_request + 1 }
 
       it 'returns as a stock status for each product at each store' do
         expect(client.bulk_check_stock(store_ids, product_ids).count).to eq(store_ids.count * product_ids.count)
@@ -154,23 +145,57 @@ RSpec.describe BootsApiClient do
       end
     end
 
-    context "when the number of store IDs is not at least #{permitted_store_request_count}" do
-      let(:number_of_stores) { permitted_store_request_count - 1 }
+    context "when the number of products is not divisible by #{permitted_products_per_request}" do
+      let(:number_of_products) { permitted_products_per_request + 1 }
+
+      it 'returns as a stock status for each product at each store' do
+        expect(client.bulk_check_stock(store_ids, product_ids).count).to eq(store_ids.count * product_ids.count)
+      end
+
+      it 'returns only unique stock statuses' do
+        expect(client.bulk_check_stock(store_ids, product_ids).uniq.count).to eq(store_ids.count * product_ids.count)
+      end
+    end
+
+    context "when the number of store IDs is not at least #{permitted_stores_per_request}" do
+      let(:number_of_stores) { permitted_stores_per_request - 1 }
 
       it 'raises an ArgumentError' do
         expect { client.bulk_check_stock(store_ids, product_ids) }.to raise_error(
-          ArgumentError, "Need at least #{permitted_store_request_count} store_ids, received #{number_of_stores}"
+          ArgumentError, "Need at least #{permitted_stores_per_request} store_ids, received #{number_of_stores}"
         )
       end
     end
 
-    context "when the number of product IDs is not at least #{permitted_product_request_count}" do
-      let(:number_of_products) { permitted_product_request_count - 1 }
+    context "when the number of product IDs is not at least #{permitted_products_per_request}" do
+      let(:number_of_products) { permitted_products_per_request - 1 }
 
       it 'raises an ArgumentError' do
         expect { client.bulk_check_stock(store_ids, product_ids) }.to raise_error(
-          ArgumentError, "Need at least #{permitted_product_request_count} product_id, received #{number_of_products}"
+          ArgumentError, "Need at least #{permitted_products_per_request} product_id, received #{number_of_products}"
         )
+      end
+    end
+
+    context 'rate limiting' do
+      context 'with twice as many store IDs as permitted for a single request' do
+        let(:number_of_stores) { permitted_stores_per_request * 2 }
+
+        it 'delays twice' do
+          client.bulk_check_stock(store_ids, product_ids)
+
+          expect(@delay_count).to eq(2)
+        end
+      end
+
+      context 'with twice as many product IDs as permitted for a single request' do
+        let(:number_of_products) { permitted_products_per_request * 2 }
+
+        it 'delays twice' do
+          client.bulk_check_stock(store_ids, product_ids)
+
+          expect(@delay_count).to eq(2)
+        end
       end
     end
   end
