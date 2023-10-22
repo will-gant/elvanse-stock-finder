@@ -41,14 +41,16 @@ RSpec.describe StockFetcher, type: :service do
     end
 
     it 'retrieves all product IDs and store IDs from the database' do
-      expect(Product).to receive(:pluck).with(:id).and_call_original
-      expect(Store).to receive(:pluck).with(:id).and_call_original
+      expect(Product).to receive(:pluck).with(:product_id).and_call_original
+      expect(Store).to receive(:pluck).with(:store_id).and_call_original
 
       stock_fetcher.fetch_all
     end
 
     it 'calls #fetch with all product IDs and store IDs' do
-      expect(stock_fetcher).to receive(:fetch).with(products.map(&:id), stores.map(&:id))
+      expect(stock_fetcher).to receive(:fetch).with(products.map { |p| p.product_id.to_s }, stores.map do |s|
+                                                                                              s.store_id.to_s
+                                                                                            end)
 
       stock_fetcher.fetch_all
     end
