@@ -22,6 +22,18 @@ class StockFetcher
     fetch(product_ids, store_ids)
   end
 
+  def products_for_dose(medicine, dose)
+    Product.where(medicine: medicine, dose: dose)
+  end
+
+  def fetch_regions(*regions)
+    products_ids = Product.pluck(:product_id).map(&:to_s)
+    Region.where(name: regions).each do |region|
+      store_ids = region.stores.pluck(:store_id).map(&:to_s)
+      fetch(products_ids, store_ids)
+    end
+  end
+
   def fetch(product_ids, store_ids)
     stock_statuses = bulk_check_stock(store_ids:, product_ids:)
   end

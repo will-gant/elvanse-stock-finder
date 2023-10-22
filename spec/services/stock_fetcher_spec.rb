@@ -246,4 +246,34 @@ RSpec.describe StockFetcher, type: :service do
       end
     end
   end
+
+  describe '#products_for_dose' do
+    let(:medicine) { Medicine.create(name: 'Test Medicine') }
+    let!(:product1) { Product.create(medicine: medicine, dose: '10mg') }
+    let!(:product2) { Product.create(medicine: medicine, dose: '20mg') }
+    let!(:product3) { Product.create(medicine: Medicine.create(name: 'Another Medicine'), dose: '10mg') }
+
+    subject(:stock_fetcher) { described_class.new }
+
+    context 'when there are products with the given medicine and dose' do
+      it 'returns the products with the specified medicine and dose' do
+        result = stock_fetcher.products_for_dose(medicine, '10mg')
+        expect(result).to contain_exactly(product1)
+      end
+    end
+
+    context 'when there are no products with the given medicine and dose' do
+      it 'returns an empty array' do
+        result = stock_fetcher.products_for_dose(medicine, '30mg')
+        expect(result).to be_empty
+      end
+    end
+
+    context 'when there are products with the same dose but different medicine' do
+      it 'does not return the products with a different medicine' do
+        result = stock_fetcher.products_for_dose(medicine, '10mg')
+        expect(result).not_to include(product3)
+      end
+    end
+  end
 end
