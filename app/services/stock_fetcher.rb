@@ -27,69 +27,36 @@ class StockFetcher
   end
 
   def bulk_check_stock(store_ids:, product_ids:)
-    @logger.info "Starting bulk stock check for #{store_ids.length} stores and #{product_ids.length} products."
-
+    log_start_of_bulk_check(store_ids, product_ids)
     validate_request_args(store_ids, product_ids, bulk: true)
 
     results = []
 
     store_ids.each_slice(PERMITTED_STORE_IDS_PER_REQUEST).with_index do |store_chunk, index|
-      @logger.info "Processing store chunk #{index + 1}..."
+      log_processing_of_store_chunk(index)
       filled_store_chunk = fill_chunk(store_chunk, store_ids, PERMITTED_STORE_IDS_PER_REQUEST)
 
-      product_ids.each_slice(PERMITTED_PRODUCT_IDS_PER_REQUEST) do |product_chunk|
-        @logger.info "Fetching stock status for product IDs #{product_chunk}..."
+      results.concat(process_products_for_store_chunk(filled_store_chunk, product_ids))
 
-        filled_product_chunk = fill_chunk(product_chunk, product_ids, PERMITTED_PRODUCT_IDS_PER_REQUEST)
-
-        chunk_results = check_stock(store_ids: filled_store_chunk, product_ids: filled_product_chunk)
-        results.concat(chunk_results)
-
-        chunk_results.each do |status|
-          status.save!
-        end
-
-        @logger.info "Finished processing product chunk for product IDs #{product_chunk}."
-        delay_next_request
-      end
-
-      @logger.info "Finished processing store chunk #{index + 1}."
+      log_end_of_store_chunk_processing(index)
     end
 
-    @logger.info "Finished bulk stock check. Found #{results.length} stock statuses."
+    log_end_of_bulk_check(results)
 
     results.uniq { |stock_status| [stock_status.store_id, stock_status.product_id] }
   end
 
   def check_stock(store_ids:, product_ids:)
-    @logger.info "Checking stock for store IDs #{store_ids} and product IDs #{product_ids}..."
-
+    log_checking_stock(store_ids, product_ids)
     validate_request_args(store_ids, product_ids)
 
-    headers = {
-      'Content-Type' => 'application/json'
-    }
-    body = {
-      storeIdList: store_ids,
-      productIdList: product_ids
-    }.to_json
+    response = send_stock_request(store_ids, product_ids)
+    handle_invalid_response!(response)
 
-    @logger.debug "HTTParty Request: POST #{BASE_URL}, Headers: #{headers.inspect}, Body: #{body}"
+    parsed_response = parse_response(response)
+    validate_parsed_response!(parsed_response)
 
-    response = self.class.post(
-      BASE_URL,
-      headers:,
-      body:
-    )
-
-    raise StockFetcherError, "API responded with a #{response.code} status." if response.code >= 400
-
-    parsed_response = JSON.parse(response.body)
-    if !parsed_response.key?('stockLevels') || parsed_response['stockLevels'].blank?
-      raise StockFetcherError, "Unexpected response from API: #{response.body}"
-    end
-
-    @logger.info "Stock retrieved successfully for store IDs #{store_ids} and product IDs #{product_ids}."
+    log_successful_retrieval(store_ids, product_ids)
     build_stock_statuses(parsed_response['stockLevels'])
   end
 
@@ -137,5 +104,95 @@ class StockFetcher
 
   def delay_next_request
     sleep(time_between_requests)
+  end
+
+  def log_start_of_bulk_check(store_ids, product_ids)
+    @logger.info "Starting bulk stock check for #{store_ids.length} stores and #{product_ids.length} products."
+  end
+
+  def log_processing_of_store_chunk(index)
+    @logger.info "Processing store chunk #{index + 1}..."
+  end
+
+  def process_products_for_store_chunk(filled_store_chunk, product_ids)
+    chunk_results = []
+
+    product_ids.each_slice(PERMITTED_PRODUCT_IDS_PER_REQUEST) do |product_chunk|
+      log_fetching_product_chunk(product_chunk)
+
+      filled_product_chunk = fill_chunk(product_chunk, product_ids, PERMITTED_PRODUCT_IDS_PER_REQUEST)
+      results_for_chunk = check_stock(store_ids: filled_store_chunk, product_ids: filled_product_chunk)
+      chunk_results.concat(results_for_chunk)
+      save_statuses(results_for_chunk)
+
+      log_end_of_product_chunk_processing(product_chunk)
+      delay_next_request
+    end
+
+    chunk_results
+  end
+
+  def log_fetching_product_chunk(product_chunk)
+    @logger.info "Fetching stock status for product IDs #{product_chunk}..."
+  end
+
+  def save_statuses(chunk_results)
+    chunk_results.each do |status|
+      status.save!
+    end
+  end
+
+  def log_end_of_product_chunk_processing(product_chunk)
+    @logger.info "Finished processing product chunk for product IDs #{product_chunk}."
+  end
+
+  def log_end_of_store_chunk_processing(index)
+    @logger.info "Finished processing store chunk #{index + 1}."
+  end
+
+  def log_end_of_bulk_check(results)
+    @logger.info "Finished bulk stock check. Found #{results.length} stock statuses."
+  end
+
+  def log_checking_stock(store_ids, product_ids)
+    @logger.info "Checking stock for store IDs #{store_ids} and product IDs #{product_ids}..."
+  end
+
+  def send_stock_request(store_ids, product_ids)
+    headers = build_headers
+    body = build_body(store_ids, product_ids)
+
+    @logger.debug "HTTParty Request: POST #{BASE_URL}, Headers: #{headers.inspect}, Body: #{body}"
+
+    self.class.post(BASE_URL, headers:, body:)
+  end
+
+  def build_headers
+    { 'Content-Type' => 'application/json' }
+  end
+
+  def build_body(store_ids, product_ids)
+    {
+      storeIdList: store_ids,
+      productIdList: product_ids
+    }.to_json
+  end
+
+  def handle_invalid_response!(response)
+    raise StockFetcherError, "API responded with a #{response.code} status." if response.code >= 400
+  end
+
+  def parse_response(response)
+    JSON.parse(response.body)
+  end
+
+  def validate_parsed_response!(parsed_response)
+    return unless !parsed_response.key?('stockLevels') || parsed_response['stockLevels'].blank?
+
+    raise StockFetcherError, "Unexpected response from API: #{parsed_response}"
+  end
+
+  def log_successful_retrieval(store_ids, product_ids)
+    @logger.info "Stock retrieved successfully for store IDs #{store_ids} and product IDs #{product_ids}."
   end
 end
