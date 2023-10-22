@@ -1,4 +1,5 @@
 require 'httparty'
+require 'logger'
 
 class BootsApiClient
   include HTTParty
@@ -10,42 +11,67 @@ class BootsApiClient
 
   class ApiError < StandardError; end
 
-  def bulk_check_stock(store_ids, product_ids)
+  def initialize
+    @logger = ::Logger.new(STDOUT)
+  end
+
+  def bulk_check_stock(store_ids:, product_ids:)
+    @logger.info "Starting bulk stock check for #{store_ids.length} stores and #{product_ids.length} products."
+
     validate_request_args(store_ids, product_ids, bulk: true)
 
     results = []
 
-    store_ids.each_slice(PERMITTED_STORE_IDS_PER_REQUEST) do |store_chunk|
+    store_ids.each_slice(PERMITTED_STORE_IDS_PER_REQUEST).with_index do |store_chunk, index|
+      @logger.info "Processing store chunk #{index + 1}..."
       filled_store_chunk = fill_chunk(store_chunk, store_ids, PERMITTED_STORE_IDS_PER_REQUEST)
 
       product_ids.each_slice(PERMITTED_PRODUCT_IDS_PER_REQUEST) do |product_chunk|
+        @logger.info "Fetching stock status for product IDs #{product_chunk}..."
         filled_product_chunk = fill_chunk(product_chunk, product_ids, PERMITTED_PRODUCT_IDS_PER_REQUEST)
 
         results << check_stock(filled_store_chunk, filled_product_chunk)
+        @logger.info "Finished processing product chunk for product IDs #{product_chunk}."
+
         delay_next_request
       end
+      @logger.info "Finished processing store chunk #{index + 1}."
     end
+
+    @logger.info "Finished bulk stock check. Found #{results.flatten.length} stock statuses."
 
     results.flatten.uniq { |stock_status| [stock_status.store_id, stock_status.product_id] }
   end
 
   def check_stock(store_ids, product_ids)
+    @logger.info "Checking stock for store IDs #{store_ids} and product IDs #{product_ids}..."
+
     validate_request_args(store_ids, product_ids)
+
+    headers = {
+      'Content-Type' => 'application/json'
+    }
+    body = {
+      storeIdList: store_ids,
+      productIdList: product_ids
+    }.to_json
+
+    @logger.debug "HTTParty Request: POST #{BASE_URL}, Headers: #{headers.inspect}, Body: #{body}"
 
     response = self.class.post(
       BASE_URL,
-      headers: {
-        'Content-Type' => 'application/json'
-      },
-      body: {
-        storeIdList: store_ids,
-        productIdList: product_ids
-      }.to_json
+      headers:,
+      body:
     )
 
     raise ApiError, "API responded with a #{response.code} status." if response.code >= 400
 
     parsed_response = JSON.parse(response.body)
+    if !parsed_response.key?('stockLevels') || parsed_response['stockLevels'].blank?
+      raise ApiError, "Unexpected response from API: #{response.body}"
+    end
+
+    @logger.info "Stock retrieved successfully for store IDs #{store_ids} and product IDs #{product_ids}."
     build_stock_statuses(parsed_response['stockLevels'])
   end
 
