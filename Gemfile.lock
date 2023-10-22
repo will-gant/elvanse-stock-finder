@@ -88,6 +88,8 @@ GEM
     factory_bot_rails (6.2.0)
       factory_bot (~> 6.2.0)
       railties (>= 5.0.0)
+    faker (3.2.1)
+      i18n (>= 1.8.11, < 2)
     ffi (1.16.3)
     globalid (1.2.1)
       activesupport (>= 6.1)
@@ -259,7 +261,8 @@ DEPENDENCIES
   bootsnap (>= 1.4.4)
   byebug
   capybara (>= 3.26)
-  factory_bot_rails (~> 6.2)
+  factory_bot_rails
+  faker (~> 3.2)
   httparty (~> 0.21.0)
   jbuilder (~> 2.7)
   listen (~> 3.3)
@@ -280,7 +283,7 @@ DEPENDENCIES
   webpacker (~> 5.0)
 
 RUBY VERSION
-   ruby 2.7.6p219
+   ruby 3.2.2p53
 
 BUNDLED WITH
    2.4.5

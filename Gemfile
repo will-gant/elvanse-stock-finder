@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '2.7.6'
+ruby '3.2.2'
 
 gem 'rails', '~> 6.1.7', '>= 6.1.7.6'
 gem 'sqlite3', '~> 1.4'
@@ -25,12 +25,17 @@ group :development do
   gem 'spring'
 end
 
+group :development, :test do
+  gem 'factory_bot_rails'
+end
+
 group :test do
   gem "rspec-rails"
   gem "webmock"
   gem 'capybara', '>= 3.26'
   gem 'selenium-webdriver', '>= 4.0.0.rc1'
   gem 'webdrivers'
+  gem "faker", "~> 3.2"
 end
 
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
@@ -38,5 +43,3 @@ gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 gem "mysql2", "~> 0.5.5"
 
 gem "httparty", "~> 0.21.0"
-
-gem "factory_bot_rails", "~> 6.2"
