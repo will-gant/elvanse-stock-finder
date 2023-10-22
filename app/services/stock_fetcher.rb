@@ -7,7 +7,7 @@ class StockFetcher
   BASE_URL = 'https://www.boots.com/online/psc/itemStock'
   PERMITTED_STORE_IDS_PER_REQUEST = 10
   PERMITTED_PRODUCT_IDS_PER_REQUEST = 1
-  RATE_LIMIT_PER_MINUTE = 4
+  RATE_LIMIT_PER_MINUTE = 6
 
   class StockFetcherError < StandardError; end
 
