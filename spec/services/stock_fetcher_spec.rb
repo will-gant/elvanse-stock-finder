@@ -31,4 +31,26 @@ RSpec.describe StockFetcher, type: :service do
       end
     end
   end
+
+  describe '#fetch_all' do
+    let!(:products) { create_list(:product, 3) }
+    let!(:stores) { create_list(:store, 2) }
+
+    before do
+      allow(stock_fetcher).to receive(:fetch)
+    end
+
+    it 'retrieves all product IDs and store IDs from the database' do
+      expect(Product).to receive(:pluck).with(:id).and_call_original
+      expect(Store).to receive(:pluck).with(:id).and_call_original
+
+      stock_fetcher.fetch_all
+    end
+
+    it 'calls #fetch with all product IDs and store IDs' do
+      expect(stock_fetcher).to receive(:fetch).with(products.map(&:id), stores.map(&:id))
+
+      stock_fetcher.fetch_all
+    end
+  end
 end
