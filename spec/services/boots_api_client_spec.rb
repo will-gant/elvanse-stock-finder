@@ -2,75 +2,176 @@ require 'rails_helper'
 require 'webmock/rspec'
 
 RSpec.describe BootsApiClient do
+  permitted_store_request_count = BootsApiClient::PERMITTED_STORE_IDS_PER_REQUEST
+  permitted_product_request_count = BootsApiClient::PERMITTED_PRODUCT_IDS_PER_REQUEST
+
+  let(:client) { described_class.new }
+  let(:number_of_stores) { permitted_store_request_count }
+  let(:number_of_products) { permitted_product_request_count }
+  let(:store_ids) { fake_store_ids(number_of_stores) }
+  let(:product_ids) { fake_product_ids(number_of_products) }
+  let(:permitted_store_request_count) { BootsApiClient::PERMITTED_STORE_IDS_PER_REQUEST }
+  let(:permitted_product_request_count) { BootsApiClient::PERMITTED_PRODUCT_IDS_PER_REQUEST }
+
   describe '#check_stock' do
-    let(:client) { described_class.new }
-    let(:number_of_stores) { 10 }
-    let(:number_of_products) { 1 }
-    let(:store_ids) { FactoryBot.create_list(:random_id, number_of_stores) }
-    let(:product_ids) { FactoryBot.create_list(:random_id, number_of_products) }
-    let(:mocked_response) { mock_boots_api_response_body(store_ids: store_ids, product_ids: product_ids) }
+    let(:mocked_response) { mock_boots_api_response_body(store_ids:, product_ids:) }
     let(:response) { { status: 200, body: mocked_response, headers: {} } }
+    let(:parsed_stock_levels) { JSON.parse(mocked_response)['stockLevels'] }
 
     before do
-      stub_request(:post, "https://www.boots.com/online/psc/itemStock")
-        .with(
-          headers: {
-            'Content-Type' => 'application/json'
-          },
-          body: {
-            storeIdList: store_ids,
-            productIdList: product_ids
-          }
-        )
+      stub_request(:post, 'https://www.boots.com/online/psc/itemStock')
+        .with(headers: { 'Content-Type' => 'application/json' }) do |request|
+          body = JSON.parse(request.body)
+          body['storeIdList'].sort == store_ids.sort && body['productIdList'].sort == product_ids.sort
+        end
         .to_return(response)
     end
 
-    context 'with 10 store IDs' do
-      context 'with 1 product ID' do
-  
-        it 'returns the parsed response body' do
-          expect(client.check_stock(store_ids, product_ids)).to eq(JSON.parse(mocked_response))
+    it 'returns an array of StockStatus instances' do
+      expect(client.check_stock(store_ids, product_ids)).to all(be_an_instance_of(StockStatus))
+    end
+
+    context "with #{permitted_store_request_count} store IDs" do
+      context "with #{permitted_product_request_count} product ID" do
+        it 'returns an array of StockStatus objects' do
+          result = client.check_stock(store_ids, product_ids)
+
+          expect(result).to all(be_an_instance_of(StockStatus))
+
+          parsed_stock_levels.each_with_index do |entry, index|
+            expect(result[index].store_id).to eq(entry['storeId'].to_i)
+            expect(result[index].product_id).to eq(entry['productId'].to_i)
+            expect(result[index].status).to eq(entry['stockLevel'])
+          end
         end
 
         context 'when the API returns an error' do
           let(:response) { { status: 503, body: nil, headers: {} } }
-    
+
           it 'raises an ApiError' do
-            expect { client.check_stock(store_ids, product_ids) }.to raise_error(BootsApiClient::ApiError, "API responded with a #{response[:status]} status.")
+            expect do
+              client.check_stock(store_ids,
+                                 product_ids)
+            end.to raise_error(BootsApiClient::ApiError, "API responded with a #{response[:status]} status.")
           end
         end
       end
 
-      context 'with more than one product ID' do
-        let(:number_of_products) { 2 }
-  
+      context 'with more than the permitted number of product ID' do
+        let(:number_of_products) { permitted_product_request_count + 1 }
+
         it 'raises an ArgumentError' do
-          expect { client.check_stock(store_ids, product_ids) }.to raise_error(ArgumentError, "Need exactly 1 product_id, received #{number_of_products}")
+          expect do
+            client.check_stock(store_ids,
+                               product_ids)
+          end.to raise_error(ArgumentError, "Need exactly 1 product_id, received #{number_of_products}")
         end
       end
 
       context 'with zero product IDs' do
         let(:number_of_products) { 0 }
-  
+
         it 'raises an ArgumentError' do
-          expect { client.check_stock(store_ids, product_ids) }.to raise_error(ArgumentError, "Need exactly 1 product_id, received #{number_of_products}")
+          expect do
+            client.check_stock(store_ids,
+                               product_ids)
+          end.to raise_error(ArgumentError, "Need exactly 1 product_id, received #{number_of_products}")
         end
       end
     end
 
-    context 'with more than 10 store IDs' do
-      let(:number_of_stores) { 11 }
+    context "with more than #{permitted_store_request_count} store IDs" do
+      let(:number_of_stores) { permitted_store_request_count + 1 }
 
       it 'raises an ArgumentError' do
-        expect { client.check_stock(store_ids, product_ids) }.to raise_error(ArgumentError, "Need exactly 10 store_ids, received #{number_of_stores}")
+        expect do
+          client.check_stock(store_ids,
+                             product_ids)
+        end.to raise_error(ArgumentError, "Need exactly 10 store_ids, received #{number_of_stores}")
       end
     end
 
-    context 'with fewer than 10 store IDs' do
-      let(:number_of_stores) { 9 }
+    context "with fewer than #{permitted_store_request_count} store IDs" do
+      let(:number_of_stores) { permitted_store_request_count - 1 }
 
       it 'raises an ArgumentError' do
-        expect { client.check_stock(store_ids, product_ids) }.to raise_error(ArgumentError, "Need exactly 10 store_ids, received #{number_of_stores}")
-      end    end
+        expect do
+          client.check_stock(store_ids,
+                             product_ids)
+        end.to raise_error(ArgumentError, "Need exactly 10 store_ids, received #{number_of_stores}")
+      end
+    end
+  end
+
+  describe '#bulk_check_stock' do
+    before do
+      allow(client).to receive(:check_stock) do |store_chunk, product_chunk|
+        store_chunk.flat_map do |store_id|
+          product_chunk.map do |product_id|
+            build_stubbed(:stock_status, store_id:, product_id:)
+          end
+        end
+      end
+    end
+
+    it 'returns an array of StockStatus instances' do
+      expect(client.bulk_check_stock(store_ids, product_ids)).to all(be_an_instance_of(StockStatus))
+    end
+
+    context "when the number of stores is divisible by #{permitted_store_request_count}" do
+      it 'returns as a stock status for each product at each store' do
+        expect(client.bulk_check_stock(store_ids, product_ids).count).to eq(store_ids.count * product_ids.count)
+      end
+    end
+
+    context "when the number of products is divisible by #{permitted_product_request_count}" do
+      it 'returns as a stock status for each product at each store' do
+        expect(client.bulk_check_stock(store_ids, product_ids).count).to eq(store_ids.count * product_ids.count)
+      end
+    end
+
+    context "when the number of stores is not divisible by #{permitted_store_request_count}" do
+      let(:number_of_stores) { permitted_store_request_count + 1 }
+
+      it 'returns as a stock status for each product at each store' do
+        expect(client.bulk_check_stock(store_ids, product_ids).count).to eq(store_ids.count * product_ids.count)
+      end
+
+      it 'returns only unique stock statuses' do
+        expect(client.bulk_check_stock(store_ids, product_ids).uniq.count).to eq(store_ids.count * product_ids.count)
+      end
+    end
+
+    context "when the number of products is not divisible by #{permitted_product_request_count}" do
+      let(:number_of_products) { permitted_product_request_count + 1 }
+
+      it 'returns as a stock status for each product at each store' do
+        expect(client.bulk_check_stock(store_ids, product_ids).count).to eq(store_ids.count * product_ids.count)
+      end
+
+      it 'returns only unique stock statuses' do
+        expect(client.bulk_check_stock(store_ids, product_ids).uniq.count).to eq(store_ids.count * product_ids.count)
+      end
+    end
+
+    context "when the number of store IDs is not at least #{permitted_store_request_count}" do
+      let(:number_of_stores) { permitted_store_request_count - 1 }
+
+      it 'raises an ArgumentError' do
+        expect { client.bulk_check_stock(store_ids, product_ids) }.to raise_error(
+          ArgumentError, "Need at least #{permitted_store_request_count} store_ids, received #{number_of_stores}"
+        )
+      end
+    end
+
+    context "when the number of product IDs is not at least #{permitted_product_request_count}" do
+      let(:number_of_products) { permitted_product_request_count - 1 }
+
+      it 'raises an ArgumentError' do
+        expect { client.bulk_check_stock(store_ids, product_ids) }.to raise_error(
+          ArgumentError, "Need at least #{permitted_product_request_count} product_id, received #{number_of_products}"
+        )
+      end
+    end
   end
 end
