@@ -23,6 +23,7 @@ To interpret `StockStatus.status`:
 1. Import the contents of `data.yaml` into the database:
     ```console
     bundle exec rake db:create
+    bundle exec rake db:migrate
     bundle exec rake import:data
     ```
 1. Get the latest stock levels from Boots by running the following in the Rails console:
