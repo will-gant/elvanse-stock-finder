@@ -1,6 +1,6 @@
 # Elvanse stock finder
 
-Backend-only Rails app to find pharmacies in the UK and Ireland that have current stocks of the ADHD medication lisdexamfetamine (branded 'Elvanse'). Polls the Boots [prescription stock checker](https://www.boots.com/online/psc/) API at a rate of 10 requests per minute to populate a database with current stock levels, which can then be queried however you wish. Note:
+Backend-only Rails app to find pharmacies in the UK and Ireland that have current stocks of the ADHD medication [lisdexamfetamine](https://bnf.nice.org.uk/drugs/lisdexamfetamine-mesilate/) (branded 'Elvanse'). Polls the Boots [prescription stock checker](https://www.boots.com/online/psc/) API at a rate of 10 requests per minute to populate a database with current stock levels, which can then be queried however you wish. Note:
 * There are 15 'products', covering doses from 20mg to 70mg (some doses have more than one product)
 * There are 1,110 pharmacies
 * A request is limited to checking the availability of a single product at 10 pharmacies
