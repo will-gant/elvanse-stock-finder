@@ -50,26 +50,27 @@ namespace :import do
             manager:
           )
 
-          address_data = store_data.dig(:Address)&.presence
+          address_data = store_data.dig('Address')&.presence
 
           if address_data.present?
-            if store.address.blank?
-              address = store.create_address!(
-                administrativeArea: address_data['administrativeArea'],
-                countryCode: address_data['countryCode'],
-                county: address_data['county'],
-                locality: address_data['locality'],
-                postcode: address_data['postcode'],
-                street: address_data['street'],
-                town: address_data['town']
-              )
-            end
+            address = Address.find_or_create_by!(
+              store:,
+              administrativeArea: address_data['administrativeArea'],
+              countryCode: address_data['countryCode'],
+              county: address_data['county'],
+              locality: address_data['locality'],
+              postcode: address_data['postcode'],
+              street: address_data['street'],
+              town: address_data['town']
+            )
 
-            grid_location_data = address_data.dig(:gridLocation)&.presence
+            grid_location_data = address_data.dig('gridLocation')&.presence
 
             if grid_location_data.present? && address.grid_location.blank?
               grid_location_data = address_data['gridLocation']
-              address.create_grid_location!(
+
+              GridLocation.find_or_create_by!(
+                address:,
                 latitude: grid_location_data['latitude'],
                 longitude: grid_location_data['longitude'],
                 propertyEasting: grid_location_data['propertyEasting'],
@@ -78,32 +79,44 @@ namespace :import do
             end
           end
 
-          status_data = store_data.dig(:status)&.presence
+          status_data = store_data.dig('status')&.presence
 
           if status_data.present? && store.status.blank?
             status_data = store_data['status']
-            store.create_status!(
+
+            StoreStatus.find_or_create_by!(
+              store:,
               code: status_data['code'].to_i,
               text: status_data['text']
             )
           end
 
-          contact_details_data = store_data.dig(:contactDetails)&.presence
+          contact_details_data = store_data.dig('contactDetails')&.presence
 
           if contact_details_data.present? && store.contact_details.empty?
             contact_details_data = store_data['contactDetails']
-            contact_details_data&.each do |contact_data|
-              store.contact_details.create!(phone: contact_data['phone'])
+
+            contact_details_data.each do |contact_detail, value|
+              if contact_detail == 'phone' && value.present?
+                ContactDetail.find_or_create_by!(
+                  store:,
+                  phone: value
+                )
+              end
             end
           end
 
-          van_routes_data = store_data.dig(:vanRoutes)&.presence
+          van_routes_data = store_data.dig('vanRoutes', 'code')&.presence
 
-          next unless van_routes_data.present? && store.van_routes.empty?
+          if van_routes_data.present? && store.van_routes.empty?
+            van_routes_data = store_data['vanRoutes']
 
-          van_routes_data = store_data['vanRoutes']
-          van_routes_data&.each do |van_route_data|
-            store.van_routes.create!(code: van_route_data['code'].to_i)
+            van_routes_data&.each do |van_route_data|
+              VanRoute.find_or_create_by!(
+                store:,
+                code: van_route_data['code'].to_s,
+              )
+            end
           end
         end
       end
