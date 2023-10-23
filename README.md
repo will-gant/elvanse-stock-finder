@@ -8,11 +8,11 @@ Backend-only Rails app to find pharmacies in the UK and Ireland that have curren
 
 To interpret `StockStatus.status`:
 
-| **StockStatus.status** | **Meaning**           |   |
-|------------------------|-----------------------|---|
-| G                      | Green - in stock      |   |
-| A                      | Amber - limited stock |   |
-| R                      | Red - out of stock    |   |
+| **StockStatus.status** | **Meaning**           |
+|------------------------|-----------------------|
+| G                      | Green - in stock      |
+| A                      | Amber - limited stock |
+| R                      | Red - out of stock    |
 
 ## Instructions
 
