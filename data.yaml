@@ -18008,6 +18008,39 @@ locations:
     8:
       name: South East
       areas:
+        302:
+          name: Brighton
+          stores:
+            2188:
+              Address:
+                administrativeArea: ENG
+                countryCode: GB
+                county: East Sussex
+                gridLocation:
+                  latitude: 50.830082
+                  longitude: -0.136119
+                  propertyEasting: '531247'
+                  propertyNorthing: '105111'
+                locality:
+                postcode: BN1 4JA
+                street: 9 London Road
+                town: Brighton
+              contactDetails:
+              deliveryChain: Unichem
+              displayname: Brighton  London Road
+              isMidnightPharmacy: N
+              isPharmacy: Y
+              isPrescriptionStoreCollectionAvailable: true
+              manager:
+              name: Brighton London Road
+              ndsasqm: 140
+              nhsMarket: England
+              openDate: '2019-09-18'
+              primaryCareOrganisation:
+              status:
+                code: 6
+                text: Open
+              vanRoutes:
         185:
           name: Hampshire and South Downs
           stores:
@@ -35979,42 +36012,6 @@ locations:
               vanRoutes:
                 vanRoute:
                   code: '172'
-    14:
-      name: South East
-      areas:
-        302:
-          name: Brighton
-          stores:
-            2188:
-              Address:
-                administrativeArea: ENG
-                countryCode: GB
-                county: East Sussex
-                gridLocation:
-                  latitude: 50.830082
-                  longitude: -0.136119
-                  propertyEasting: '531247'
-                  propertyNorthing: '105111'
-                locality:
-                postcode: BN1 4JA
-                street: 9 London Road
-                town: Brighton
-              contactDetails:
-              deliveryChain: Unichem
-              displayname: Brighton  London Road
-              isMidnightPharmacy: N
-              isPharmacy: Y
-              isPrescriptionStoreCollectionAvailable: true
-              manager:
-              name: Brighton London Road
-              ndsasqm: 140
-              nhsMarket: England
-              openDate: '2019-09-18'
-              primaryCareOrganisation:
-              status:
-                code: 6
-                text: Open
-              vanRoutes:
     27:
       name: West of Scotland
       areas:
