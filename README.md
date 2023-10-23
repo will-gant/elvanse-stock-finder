@@ -29,6 +29,10 @@ To interpret `StockStatus.status`:
     ```ruby
     fetcher = StockFetcher.new
 
+    # check all
+    fetcher.fetch_all
+
+    # check specific doses and/or regions
     medicine = Medicine.find_by(name: 'lisdexamfetamine')
 
     products = fetcher.products_for_dose(medicine, ['30mg', '50mg'])
