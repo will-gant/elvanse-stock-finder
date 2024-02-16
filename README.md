@@ -3,7 +3,7 @@
 Backend-only Rails app to find pharmacies in the UK and Ireland that have current stocks of the ADHD medication [lisdexamfetamine](https://bnf.nice.org.uk/drugs/lisdexamfetamine-mesilate/) (branded 'Elvanse'). Polls the Boots [prescription stock checker](https://www.boots.com/online/psc/) API at a rate of 5 requests per minute to populate a database with current stock levels, which can then be queried however you wish. Note:
 * lisdexamfetamine is sold in the UK under multiple brand names ('Elvanse', 'Elvanse Adult', etc)
 * This application refers to each dose of a given brand as a 'product' (i.e. 20mg Elvanse is a product, 20mg Elvanse Adult is a different product).
-* There are 15 known 'products', covering the doses 20mg, 30mg, 40mg, 50mg, 60mg and 70mg
+* There are 15 known 'products', covering doses from 20mg to 70mg inclusive
 * Boots organises its pharmacies in 13 'regions', which are subdivided into 108 'areas', with a total of 1,110 pharmacies between them.
 * Each request to the API must check the availability of exactly one product at 10 pharmacies (any deviation in either number produces a non-2xx response).
 * Requests appear to be subject to a rate limit of five requests per minute per IP address
@@ -37,11 +37,11 @@ To interpret `StockStatus.status`:
     fetcher.fetch_all
 
     # check specific doses and/or regions
-    medicine = Medicine.find_by(name: 'lisdexamfetamine')
+    medicine = Medicine.find_by(name: 'lisdexamfetamine') # currently this is the only medicine
 
-    products = fetcher.products_for_dose(medicine, ['30mg', '50mg'])
+    products = fetcher.products_for_dose(medicine, ['30mg', '50mg']) # dose options are 20mg, 30mg, 40mg, 50mg, 60mg and 70mg
 
-    fetcher.fetch_custom(products, 'South East', 'London')
+    fetcher.fetch_custom(products, 'South East', 'London') # region options are "Central England", "East of England", "Ireland", "London", "Northern England and NI", "Scotland", "South East", "Specialist Pharmacy", "Travel", "Unassigned", "Wales", "Wales Merseyside West Midlands", "West of Scotland"
     ```
 1. Check stock levels. For example:
     ```ruby
