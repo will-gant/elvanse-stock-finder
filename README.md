@@ -3,8 +3,8 @@
 Backend-only Rails app to find pharmacies in the UK and Ireland that have current stocks of the ADHD medication [lisdexamfetamine](https://bnf.nice.org.uk/drugs/lisdexamfetamine-mesilate/) (branded 'Elvanse'). Polls the Boots [prescription stock checker](https://www.boots.com/online/psc/) API at a rate of 5 requests per minute to populate a database with current stock levels, which can then be queried however you wish. Note:
 * There are 15 'products', covering doses from 20mg to 70mg (some doses have more than one product)
 * There are 1,110 pharmacies
-* A request is limited to checking the availability of a single product at 10 pharmacies
-* Therefore it takes 111 requests to check the availability of a single product at all pharmacies, and 1,665 requests to check all products at all pharmacies. At 10 requests per minute that's just over 2 hours and 45 minutes.
+* A request must check the availability of exactly one product at exactly 10 pharmacies
+* Therefore it takes 111 requests to check the availability of a single product at all pharmacies, and 1,665 requests to check all products at all pharmacies. At 5 requests per minute (the maximum permitted by the API), that's just over 5 hours 30 minutes.
 
 To interpret `StockStatus.status`:
 
