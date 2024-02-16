@@ -1,10 +1,13 @@
 # Elvanse stock finder
 
 Backend-only Rails app to find pharmacies in the UK and Ireland that have current stocks of the ADHD medication [lisdexamfetamine](https://bnf.nice.org.uk/drugs/lisdexamfetamine-mesilate/) (branded 'Elvanse'). Polls the Boots [prescription stock checker](https://www.boots.com/online/psc/) API at a rate of 5 requests per minute to populate a database with current stock levels, which can then be queried however you wish. Note:
-* There are 15 'products', covering doses from 20mg to 70mg (some doses have more than one product)
-* There are 1,110 pharmacies
-* A request must check the availability of exactly one product at exactly 10 pharmacies
-* Therefore it takes 111 requests to check the availability of a single product at all pharmacies, and 1,665 requests to check all products at all pharmacies. At 5 requests per minute (the maximum permitted by the API), that's just over 5 hours 30 minutes.
+* lisdexamfetamine is sold in the UK under multiple brand names ('Elvanse', 'Elvanse Adult', etc)
+* This application refers to each dose of a given brand as a 'product' (i.e. 20mg Elvanse is a product, 20mg Elvanse Adult is a different product).
+* There are 15 known 'products', covering the doses 20mg, 30mg, 40mg, 50mg, 60mg and 70mg
+* Boots organises its pharmacies in 13 'regions', which are subdivided into 108 'areas', with a total of 1,110 pharmacies between them.
+* Each request to the API must check the availability of exactly one product at 10 pharmacies (any deviation in either number produces a non-2xx response).
+* Requests appear to be subject to a rate limit of five requests per minute per IP address
+* Therefore it takes 111 requests to check the availability of a single product at all pharmacies, and 1,665 requests to check all products at all pharmacies. At the maximum permitted request rate, that's just over 5 hours 30 minutes.
 
 To interpret `StockStatus.status`:
 
